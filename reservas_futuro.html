@@ -142,9 +142,8 @@
         .diff.negative::before { content: '▼ '; }
         td.ly-col { background-color: var(--ly-bg-color); }
         td.act-col { background-color: var(--brand-color-light); }
-        th.price-header, td.price-col-ly { background-color: var(--price-ly-bg-color); }
+         th.price-header, td.price-col-ly { background-color: var(--price-ly-bg-color); }
         td.price-col-act { background-color: var(--price-act-bg-color); }
-
 
         /* Estilos para el módulo de IA */
         .ai-assistant-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
@@ -197,6 +196,7 @@
         </div>
         <div id="report-container"><div class="loading-indicator">Generando reporte...</div></div>
         
+        <!-- Módulo de Análisis con IA -->
         <div class="card">
             <div class="card-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">Análisis con IA (Beta)</div>
             <div class="card-body" style="display:none;">
@@ -245,7 +245,7 @@
             document.getElementById('compare-filter').addEventListener('change', updateReport);
             document.getElementById('price-toggle-filter').addEventListener('change', (e) => {
                 document.getElementById('price-currency-group').style.display = e.target.value === 'si' ? 'flex' : 'none';
-               
+                
                 updateReport();
             });
             document.getElementById('price-currency-filter').addEventListener('change', updateReport);
@@ -340,7 +340,7 @@
                     });
                 }
             }
-            updateCompareFilter();
+
             addFilterEventListeners();
         }
         
@@ -465,7 +465,7 @@
 
             const varHeaderText = compareBy === 'reservas' ? 'Var % Res' : (compareBy === 'diarias' ? 'Var % Diarias' : (compareBy === 'totalPrice' ? 'Var % Total' : 'Var % Prom.'));
             const varHeaderHtml = compareBy !== 'none' ? '<th>' + varHeaderText + '</th>' : '';
-            const priceHeaderHtml = showPrices ? '<th class="price-header">Total LY ' + priceCurrency + ' (k)</th><th class="price-header">Total Act ' + priceCurrency + ' (k)</th><th class="price-header">Prom. Diario LY ' + priceCurrency + '</th><th class="price-header">Prom. Diario Act ' + priceCurrency + '</th>' : '';
+            const priceHeaderHtml = showPrices ? '<th>Total LY ' + priceCurrency + ' (k)</th><th>Total Act ' + priceCurrency + ' (k)</th><th>Prom. Diario LY ' + priceCurrency + '</th><th>Prom. Diario Act ' + priceCurrency + '</th>' : '';
 
             const totalSubtitle = selectedSituations.length > 0 ? '<span class="total-subtitle">(' + selectedSituations.join(' + ') + ')</span>' : '';
             header1 += '<th rowspan="2" colspan="' + (4 + compareMetricsCount + priceMetricsCount) + '" class="total-header">' + 'TOTAL ACUMULADO ' + totalSubtitle + '</th>';
@@ -760,7 +760,16 @@
                 }
             }
             
-            const fullPrompt = "Eres un analista de datos experto en la industria de alquiler de vehículos. Tu principal objetivo es comparar el rendimiento del año actual (CY) contra el del año pasado (LY). Un aumento en las reservas/diarias en el año actual es positivo. Una disminución en cancelaciones/no show es positivo. Analiza los datos desde esta perspectiva.\n\nContexto de la conversación anterior (si aplica):\n" + lastAiResponse + "\n\nDatos resumidos para tu análisis:\n" + dataSummary + "\n\nResponde a la siguiente pregunta de forma concisa, profesional y en español:\n" + userPrompt;
+            const fullPrompt = `Eres un analista de datos experto en la industria de alquiler de vehículos. Tu principal objetivo es comparar el rendimiento del año actual (CY) contra el del año pasado (LY). Un aumento en las reservas/diarias en el año actual es positivo. Una disminución en cancelaciones/no show es positivo. Analiza los datos desde esta perspectiva.
+
+            Contexto de la conversación anterior (si aplica):
+            ${lastAiResponse}
+
+            Datos resumidos para tu análisis:
+            ${dataSummary}
+
+            Responde a la siguiente pregunta de forma concisa, profesional y en español:
+            ${userPrompt}`;
 
             renderAiChart(questionType, context, metric);
 
