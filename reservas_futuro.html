@@ -31654,7 +31654,7 @@
       "fuente": "ly",
       "region": "BUENOS AIRES",
       "agency": "AAAER",
-      "situacion": "ABIERTA",
+      "situacion": "UTILIZADA",
       "diarias": 5,
       "Segmentacion": "PROPIA",
       "TipodeAlquiler": "No Aplica",
@@ -79500,7 +79500,7 @@
       "diciembre"
     ]
   },
-  "updateTimestamp": "8 de julio de 2025, 10:45 a. m.hs"
+  "updateTimestamp": "8 de julio de 2025, 10:56 a. m.hs"
 }
         ;
         let aiChart = null;
@@ -79715,10 +79715,9 @@
                     entry.reservas[item.fuente]++;
                     entry.diarias[item.fuente] += item.diarias;
 
-                    if (item.situacion === 'ABIERTA' || item.situacion === 'UTILIZADA') {
-                        entry.preciosARS[item.fuente] += item.IngresoTotalEstimadoARS;
-                        entry.preciosUSD[item.fuente] += item.ValorTotalUSD;
-                    }
+                    // CORRECCIÓN: Se acumulan los precios para todas las situaciones, no solo las abiertas/utilizadas, para un análisis completo.
+                    entry.preciosARS[item.fuente] += item.IngresoTotalEstimadoARS;
+                    entry.preciosUSD[item.fuente] += item.ValorTotalUSD;
                 });
             });
             return aggregated;
@@ -79791,14 +79790,16 @@
             let footer = `<tfoot>${renderRow('Total ' + mesNombre, data, mesNum, 'TOTAL', 'TOTAL', selectedSegments, selectedSituations, 'total-row', false, compareBy, showPrices, priceCurrency)}</tfoot>`;
             
             const currentYearEntry = serverData.normalizedData.find(d => d.month == mesNum && d.fuente === 'act');
-            const year = currentYearEntry ? currentYearEntry.year : new Date().getFullYear();
+            const lyYearEntry = serverData.normalizedData.find(d => d.month == mesNum && d.fuente === 'ly');
+            const year = currentYearEntry ? currentYearEntry.year : (lyYearEntry ? lyYearEntry.year + 1 : new Date().getFullYear());
+
 
             let subtitle = '';
             const filterParts = [];
             for (const key in displayFilters) { filterParts.push(displayFilters[key].join(', ')); }
             if (filterParts.length > 0) { subtitle = `<span class="month-subtitle">(${filterParts.join(' | ')})</span>`; }
 
-            return `<div class="month-wrapper"><div class="month-header"><h2>${mesNombre} ${year} ${subtitle}</h2></div><div class="table-container"><table>
+            return `<div class="month-wrapper"><div class="month-header"><h2>${mesNombre} ${year} vs ${year-1} ${subtitle}</h2></div><div class="table-container"><table>
                 <thead><tr>${header1}</tr><tr>${header2}</tr><tr>${header3}</tr></thead>
                 <tbody>${body}</tbody>${footer}
                 </table></div></div>`;
@@ -79843,10 +79844,8 @@
                         totalReservasAct += metricData.reservas.act;
                         totalDiariasLy += metricData.diarias.ly;
                         totalDiariasAct += metricData.diarias.act;
-                        if (showPrices) {
-                             totalPreciosLy += priceCurrency === 'USD' ? metricData.preciosUSD.ly : metricData.preciosARS.ly;
-                             totalPreciosAct += priceCurrency === 'USD' ? metricData.preciosUSD.act : metricData.preciosARS.act;
-                        }
+                        totalPreciosLy += priceCurrency === 'USD' ? metricData.preciosUSD.ly : metricData.preciosARS.ly;
+                        totalPreciosAct += priceCurrency === 'USD' ? metricData.preciosUSD.act : metricData.preciosARS.act;
                     }
                 }
             }
@@ -79854,6 +79853,21 @@
             cells += renderCell(totalReservasAct, 'act-col');
             cells += renderCell(totalDiariasLy, 'ly-col');
             cells += renderCell(totalDiariasAct, 'act-col');
+            
+            // CORRECCIÓN: Se mueve el bloque de variación para que coincida con el orden del encabezado.
+            if (compareBy !== 'none') {
+                let totalVar;
+                if (compareBy === 'reservas') totalVar = calculateVariation(totalReservasAct, totalReservasLy);
+                else if (compareBy === 'diarias') totalVar = calculateVariation(totalDiariasAct, totalDiariasLy);
+                else if (compareBy === 'totalPrice') totalVar = calculateVariation(totalPreciosAct, totalPreciosLy);
+                else if (compareBy === 'avgPrice') {
+                    const avgAct = totalDiariasAct > 0 ? totalPreciosAct / totalDiariasAct : 0;
+                    const avgLy = totalDiariasLy > 0 ? totalPreciosLy / totalDiariasLy : 0;
+                    totalVar = calculateVariation(avgAct, avgLy);
+                }
+                cells += `<td class="diff ${totalVar.class}">${totalVar.text}</td>`;
+            }
+
             if (showPrices) {
                 const avgDiariaLy = totalDiariasLy > 0 ? totalPreciosLy / totalDiariasLy : 0;
                 const avgDiariaAct = totalDiariasAct > 0 ? totalPreciosAct / totalDiariasAct : 0;
@@ -79863,14 +79877,6 @@
                 cells += renderCell(avgDiariaAct, 'act-col price-col-act', true, false);
             }
 
-            if (compareBy !== 'none') {
-                let totalVar;
-                if (compareBy === 'reservas') totalVar = calculateVariation(totalReservasAct, totalReservasLy);
-                else if (compareBy === 'diarias') totalVar = calculateVariation(totalDiariasAct, totalDiariasLy);
-                else if (compareBy === 'totalPrice') totalVar = calculateVariation(totalPreciosAct, totalPreciosLy);
-                else if (compareBy === 'avgPrice') totalVar = calculateVariation(totalDiariasAct > 0 ? totalPreciosAct / totalDiariasAct : 0, totalDiariasLy > 0 ? totalPreciosLy / totalDiariasLy : 0);
-                cells += `<td class="diff ${totalVar.class}">${totalVar.text}</td>`;
-            }
 
             selectedSegments.forEach((segment) => {
                 selectedSituations.forEach((situation, j) => {
@@ -79884,6 +79890,25 @@
                     cells += renderCell(metricData.diarias.ly, 'ly-col');
                     cells += renderCell(metricData.diarias.act, 'act-col');
 
+                    // CORRECCIÓN: Se mueve el bloque de variación para que coincida con el orden del encabezado.
+                    if (compareBy !== 'none') {
+                        const invertedSituations = ["CANCELADA", "NO SHOW", "NO CONFIRMADA"];
+                        const isInverted = invertedSituations.includes(situation);
+                        let variationData;
+                        const cellPreciosAct = priceCurrency === 'USD' ? metricData.preciosUSD.act : metricData.preciosARS.act;
+                        const cellPreciosLy = priceCurrency === 'USD' ? metricData.preciosUSD.ly : metricData.preciosARS.ly;
+
+                        if (compareBy === 'reservas') variationData = calculateVariation(metricData.reservas.act, metricData.reservas.ly, isInverted);
+                        else if (compareBy === 'diarias') variationData = calculateVariation(metricData.diarias.act, metricData.diarias.ly, isInverted);
+                        else if (compareBy === 'totalPrice') variationData = calculateVariation(cellPreciosAct, cellPreciosLy, isInverted);
+                        else if (compareBy === 'avgPrice') {
+                             const cellAvgDiariaAct = metricData.diarias.act > 0 ? cellPreciosAct / metricData.diarias.act : 0;
+                             const cellAvgDiariaLy = metricData.diarias.ly > 0 ? cellPreciosLy / metricData.diarias.ly : 0;
+                             variationData = calculateVariation(cellAvgDiariaAct, cellAvgDiariaLy, isInverted);
+                        }
+                        cells += `<td class="diff ${variationData.class}">${variationData.text}</td>`;
+                    }
+
                     if (showPrices) {
                         const cellPreciosLy = priceCurrency === 'USD' ? metricData.preciosUSD.ly : metricData.preciosARS.ly;
                         const cellPreciosAct = priceCurrency === 'USD' ? metricData.preciosUSD.act : metricData.preciosARS.act;
@@ -79893,17 +79918,6 @@
                         cells += renderCell(cellPreciosAct, 'act-col price-col-act', true, true);
                         cells += renderCell(cellAvgDiariaLy, 'ly-col price-col-ly', true, false);
                         cells += renderCell(cellAvgDiariaAct, 'act-col price-col-act', true, false);
-                    }
-
-                    if (compareBy !== 'none') {
-                        const invertedSituations = ["CANCELADA", "NO SHOW", "NO CONFIRMADA"];
-                        const isInverted = invertedSituations.includes(situation);
-                        let variationData;
-                        if (compareBy === 'reservas') variationData = calculateVariation(metricData.reservas.act, metricData.reservas.ly, isInverted);
-                        else if (compareBy === 'diarias') variationData = calculateVariation(metricData.diarias.act, metricData.diarias.ly, isInverted);
-                        else if (compareBy === 'totalPrice') variationData = calculateVariation(priceCurrency === 'USD' ? metricData.preciosUSD.act : metricData.preciosARS.act, priceCurrency === 'USD' ? metricData.preciosUSD.ly : metricData.preciosARS.ly, isInverted);
-                        else if (compareBy === 'avgPrice') variationData = calculateVariation(metricData.diarias.act > 0 ? (priceCurrency === 'USD' ? metricData.preciosUSD.act : metricData.preciosARS.act) / metricData.diarias.act : 0, metricData.diarias.ly > 0 ? (priceCurrency === 'USD' ? metricData.preciosUSD.ly : metricData.preciosARS.ly) / metricData.diarias.ly : 0, isInverted);
-                        cells += `<td class="diff ${variationData.class}">${variationData.text}</td>`;
                     }
                 });
             });
@@ -80002,7 +80016,7 @@
         }
 
         async function callGeminiAPI(prompt) {
-            const apiKey = ""; 
+            const apiKey = "AIzaSyAp65pumBnsI6svTooEH_dScvfJv7lFcpw"; 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             const payload = { contents: [{ parts: [{ text: prompt }] }] };
 
