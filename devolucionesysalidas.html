@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análisis Devoluciones &amp; Salidas - Localiza</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    :root {
+      --brand-green: #00A859;
+      --brand-green-dark: #007F43;
+      --brand-yellow: #FFCC00;
+      --bg-page: #E9EEF2;
+      --bg-header: linear-gradient(135deg, var(--brand-green), var(--brand-green-dark));
+      --bg-card: #FFFFFF;
+      --text-light: #F8F9FA;
+      --text-dark: #212529;
+      --text-muted: #6C757D;
+      --shadow-md: 0 5px 15px rgba(0,0,0,0.1);
+      --border-radius-lg: 12px;
+      --transition-smooth: 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-dark);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: var(--bg-header);
+      color: var(--text-light);
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+    header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    main {
+      flex-grow: 1;
+      width: 90%;
+      max-width: 900px;
+      margin: -2rem auto 2rem;
+      background: var(--bg-card);
+      padding: 2rem 1.5rem;
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-md);
+    }
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Análisis Devoluciones &amp; Salidas</h1>
+    <p class="subtitle">Explora el rendimiento de devoluciones y salidas en cada sucursal.</p>
+  </header>
+  <main>
+    <p>Próximamente encontrarás aquí los paneles interactivos de devoluciones y salidas.</p>
+  </main>
+  <footer>
+    © <span id="year"></span> Localiza Rent a Car • Desarrollado y analizado por Mateus Torres.
+  </footer>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    feather.replace();
+  </script>
+</body>
+</html>
